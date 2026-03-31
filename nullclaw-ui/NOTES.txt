@@ -1,6 +1,0 @@
-Current state:
-- index.html connects to ws://127.0.0.1:32123/ws
-- pair.html posts pairing code to http://127.0.0.1:8080/pair
-- gateway appears to require a pairing/auth flow before chat frames are accepted
-
-Next repo step should be wiring the exact Nullclaw pairing response/token format into index.html once that response shape is known.
