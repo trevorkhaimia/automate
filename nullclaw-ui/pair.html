@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nullclaw Pair</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f5f5f5; }
+    .wrap { max-width: 700px; margin: 40px auto; padding: 0 16px; }
+    h1 { margin: 0 0 16px; }
+    .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 16px; }
+    input { width: 100%; padding: 10px; font-size: 16px; margin: 8px 0 12px; }
+    button { padding: 10px 14px; font-size: 16px; cursor: pointer; }
+    #out { margin-top: 12px; white-space: pre-wrap; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Pair Nullclaw UI</h1>
+    <div class="card">
+      <p>Enter the local pairing code from your running <code>nullclaw gateway</code> session.</p>
+      <input id="code" placeholder="Pairing code" />
+      <button id="pairBtn">Pair</button>
+      <div id="out"></div>
+    </div>
+  </div>
+  <script>
+    const out = document.getElementById('out');
+    document.getElementById('pairBtn').addEventListener('click', async () => {
+      const code = document.getElementById('code').value.trim();
+      if (!code) return;
+      out.textContent = 'Pairing…';
+      try {
+        const res = await fetch('http://127.0.0.1:8080/pair', {
+          method: 'POST',
+          headers: { 'X-Pairing-Code': code }
+        });
+        const text = await res.text();
+        out.textContent = text;
+        localStorage.setItem('nullclaw_pair_response', text);
+      } catch (e) {
+        out.textContent = String(e);
+      }
+    });
+  </script>
+</body>
+</html>
