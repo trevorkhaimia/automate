@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nullclaw UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f5f5f5; }
+    .wrap { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+    h1 { margin: 0 0 16px; }
+    #status { margin-bottom: 12px; font-size: 14px; }
+    #chat { background: #fff; border: 1px solid #ddd; border-radius: 8px; min-height: 420px; max-height: 420px; overflow: auto; padding: 12px; }
+    .msg { margin: 0 0 10px; line-height: 1.4; white-space: pre-wrap; }
+    .me { color: #111; }
+    .bot { color: #0b57d0; }
+    .sys { color: #666; font-size: 13px; }
+    .row { display: flex; gap: 8px; margin-top: 12px; }
+    input { flex: 1; padding: 10px; font-size: 16px; }
+    button { padding: 10px 14px; font-size: 16px; cursor: pointer; }
+    .small { font-size: 12px; color: #666; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Nullclaw UI</h1>
+    <div id="status">Connecting…</div>
+    <div id="chat"></div>
+    <div class="row">
+      <input id="input" placeholder="Type a message…" />
+      <button id="sendBtn">Send</button>
+    </div>
+    <div class="small">Defaults to ws://127.0.0.1:32123/ws . Edit the file if your port differs.</div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const chatEl = document.getElementById('chat');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+
+    let reqId = 0;
+    let ws;
+
+    function addMessage(kind, text) {
+      const div = document.createElement('div');
+      div.className = 'msg ' + kind;
+      div.textContent = text;
+      chatEl.appendChild(div);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function connect() {
+      ws = new WebSocket('ws://127.0.0.1:32123/ws');
+
+      ws.onopen = () => {
+        statusEl.textContent = 'Connected';
+        addMessage('sys', 'Connected to Nullclaw');
+        ws.send(JSON.stringify({
+          type: 'req',
+          id: String(++reqId),
+          method: 'connect',
+          params: {
+            minProtocol: 3,
+            maxProtocol: 3,
+            role: 'operator',
+            scopes: ['operator.read', 'operator.write'],
+            client: { id: 'nullclaw-ui', version: '1.0' }
+          }
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        addMessage('bot', event.data);
+      };
+
+      ws.onerror = () => {
+        statusEl.textContent = 'WebSocket error';
+        addMessage('sys', 'WebSocket error');
+      };
+
+      ws.onclose = () => {
+        statusEl.textContent = 'Disconnected';
+        addMessage('sys', 'Disconnected');
+      };
+    }
+
+    function send() {
+      const text = inputEl.value.trim();
+      if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+      addMessage('me', text);
+      ws.send(JSON.stringify({
+        type: 'req',
+        id: String(++reqId),
+        method: 'chat.send',
+        params: { message: text }
+      }));
+      inputEl.value = '';
+    }
+
+    sendBtn.addEventListener('click', send);
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') send();
+    });
+
+    connect();
+  </script>
+</body>
+</html>
