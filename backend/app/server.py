@@ -5,7 +5,7 @@ import subprocess
 from fastapi import FastAPI, WebSocket
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from .browser import start_firefox, open_url, click, type_text
+from .browser_selenium import start_firefox, open_url, click, type_text
 from .llm import chat
 
 load_dotenv()
@@ -86,9 +86,12 @@ async def chat_api(m: Message):
 
     url = _extract_url(text)
     if url:
-        await start_firefox()
-        await open_url(url)
-        return {"response": f"Opened {url}", "action": "browser_opened", "url": url}
+        try:
+            await start_firefox()
+            await open_url(url)
+            return {"response": f"Opened {url}", "action": "browser_opened", "url": url}
+        except Exception as e:
+            return {"response": f"Could not open {url}", "action": "browser_error", "url": url, "error": str(e)}
 
     if lower.startswith("click "):
         selector = text[6:].strip()
